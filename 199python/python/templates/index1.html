@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Taobao Scraper</title>
+    <script>
+        // 定义一个函数，用于轮询服务器检查任务是否完成
+        function checkStatus() {
+            // 发送 AJAX 请求到服务器
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', '/status', true);
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    // 如果返回的状态为完成，刷新页面
+                    if (xhr.responseText === 'completed') {
+                        window.location.reload();
+                    }
+                }
+            };
+            xhr.send();
+        }
+
+        // 每隔一段时间调用一次 checkStatus 函数
+        setInterval(checkStatus, 5000); // 每隔 5 秒钟调用一次
+    </script>
+</head>
+<body>
+    <h1>Taobao Scraper</h1>
+    {% if allow_download %}
+    <h2>Search Results:</h2>
+    <h1>Data Display</h1>
+    <h2>Table:</h2>
+    <!-- 使用 safe 过滤器安全地渲染 HTML 表格 -->
+    {{ excel_file | safe }}
+    <br>
+    <a href="{{ url_for('download_excel') }}">Download Excel</a>
+    {% else %}
+    <p>正在获取数据，请稍等片刻...</p>
+    {% endif %}
+</body>
+</html>

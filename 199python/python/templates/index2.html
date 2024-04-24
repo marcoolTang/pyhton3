@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product List</title>
+</head>
+<body>
+    <h1>Product List</h1>
+    <div id="result"></div>
+    <input type="text" id="searchQuery" placeholder="Enter search query">
+    <button id="searchBtn">Search</button>
+    <script>
+        document.getElementById('searchBtn').addEventListener('click', search);
+        document.getElementById('searchQuery').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                search();
+            }
+        });
+
+        function search() {
+            var query = document.getElementById('searchQuery').value;
+            if (query.trim() === '') {
+                alert('Please enter a search query');
+                return;
+            }
+
+            // 禁用搜索按钮
+            document.getElementById('searchBtn').disabled = true;
+
+            // 发送搜索请求
+            fetch(`/start_scrape?query=${query}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'pending') {
+                        // 如果搜索已经开始，显示等待消息
+                        document.getElementById('result').innerHTML = "<p>Processing data...</p>";
+                        // 开始轮询搜索状态
+                        checkStatus();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    // 启用搜索按钮
+                    document.getElementById('searchBtn').disabled = false;
+                });
+        }
+
+        function checkStatus() {
+            // 每隔一段时间检查搜索状态
+            var interval = setInterval(function() {
+                fetch('/check_status')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.completed) {
+                            // 如果搜索完成，显示下载链接
+                            clearInterval(interval);
+                            document.getElementById('result').innerHTML = `<p><a href="${data.excel_link}">Download Excel</a></p>`;
+                            // 启用搜索按钮
+                            document.getElementById('searchBtn').disabled = false;
+                        } else {
+                            // 如果搜索未完成，显示等待消息
+                            document.getElementById('result').innerHTML = "<p>Processing data...</p>";
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        // 启用搜索按钮
+                        document.getElementById('searchBtn').disabled = false;
+                    });
+            }, 3000); // 每隔3秒钟轮询一次
+        }
+    </script>
+</body>
+</html>
